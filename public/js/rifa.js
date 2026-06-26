@@ -28,6 +28,7 @@
 
   const headerUserName = document.getElementById('headerUserName');
   const adminBadge = document.getElementById('adminBadge');
+  const roleBadgeText = document.getElementById('roleBadgeText');
   const logoutBtn = document.getElementById('logoutBtn');
 
   const statVendidos = document.getElementById('statVendidos');
@@ -63,6 +64,10 @@
   headerUserName.textContent = nombre;
   if (role === 'admin') {
     adminBadge.hidden = false;
+    roleBadgeText.textContent = 'Admin';
+  } else if (role === 'vendedor') {
+    adminBadge.hidden = false;
+    roleBadgeText.textContent = 'moralito';
   }
 
   // ——— Socket.io ———
