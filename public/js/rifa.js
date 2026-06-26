@@ -20,6 +20,7 @@
   let searchValue = '';
   let selectedNumero = null;
   const selectedNumeros = new Set();
+  let multiSelectMode = false;
   let toastTimer = null;
 
   // ——— Referencias DOM ———
@@ -36,6 +37,7 @@
   const selectionCount = document.getElementById('selectionCount');
   const clearSelectionBtn = document.getElementById('clearSelectionBtn');
   const markSelectedBtn = document.getElementById('markSelectedBtn');
+  const toggleMultiSelectBtn = document.getElementById('toggleMultiSelectBtn');
 
   const statVendidos = document.getElementById('statVendidos');
   const statDisponibles = document.getElementById('statDisponibles');
@@ -231,8 +233,10 @@
 
     if (data.vendido) {
       openInfoModal(data);
-    } else {
+    } else if (multiSelectMode) {
       toggleNumeroSelection(num);
+    } else {
+      openMarcarModalSingle(num);
     }
   }
 
@@ -264,6 +268,13 @@
       cell.classList.remove('selected');
     });
     updateSelectionBar();
+  }
+
+  function setMultiSelectMode(enabled) {
+    multiSelectMode = enabled;
+    toggleMultiSelectBtn.classList.toggle('active-multi', enabled);
+    toggleMultiSelectBtn.textContent = enabled ? 'Modo selección múltiple' : 'Seleccionar varios';
+    if (!enabled) clearSelection();
   }
 
   function openMarcarModal() {
@@ -346,6 +357,7 @@
 
   clearSelectionBtn.addEventListener('click', clearSelection);
   markSelectedBtn.addEventListener('click', openMarcarModal);
+  toggleMultiSelectBtn.addEventListener('click', () => setMultiSelectMode(!multiSelectMode));
 
   infoUnmarkBtn.addEventListener('click', () => {
     if (!selectedNumero) return;

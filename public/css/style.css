@@ -567,6 +567,12 @@ body {
   min-width: 120px;
 }
 
+#toggleMultiSelectBtn.active-multi {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: rgba(99, 102, 241, 0.8);
+  color: var(--accent-light);
+}
+
 .numero-cell.selected {
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.7);
   transform: scale(1.05);
