@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sistema de gestión de rifa — ingresá con tu nombre y contraseña para marcar números" />
+  <title>Rifa — Ingresar</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="bg-decoration" aria-hidden="true"></div>
+
+  <main class="login-page">
+    <div class="login-container">
+      <div class="login-logo">
+        <span class="logo-icon" role="img" aria-label="Rifa">🎟️</span>
+        <h1>Sistema de Rifa</h1>
+        <p>Ingresá para ver y marcar números</p>
+      </div>
+
+      <div class="glass-card login-form-card">
+        <form id="loginForm" novalidate>
+          <div class="form-group">
+            <label for="nombre">Tu nombre</label>
+            <input
+              type="text"
+              id="nombre"
+              name="nombre"
+              placeholder="Ej: Juan García"
+              autocomplete="name"
+              autocapitalize="words"
+              required
+              minlength="2"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Ingresá la contraseña"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+
+          <button type="submit" class="btn-primary" id="loginBtn">
+            Ingresar al sistema
+          </button>
+
+          <div class="error-message" id="errorMessage" role="alert"></div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Panel de gestión de rifa — 500 números en tiempo real" />
+  <title>Rifa — Panel de Números</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="bg-decoration" aria-hidden="true"></div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <p class="loading-text">Cargando números...</p>
+  </div>
+
+  <div class="rifa-page">
+    <!-- Header -->
+    <header class="header" role="banner">
+      <div class="header-inner">
+        <div class="header-brand">
+          <span class="brand-icon" aria-hidden="true">🎟️</span>
+          <h1>Rifa</h1>
+        </div>
+        <div class="header-user">
+          <div class="user-badge" id="userBadge">
+            <span class="user-dot" aria-hidden="true"></span>
+            <span class="user-name" id="headerUserName">Cargando...</span>
+          </div>
+          <span class="admin-badge" id="adminBadge" hidden>⚡ Admin</span>
+          <button class="btn-logout" id="logoutBtn" aria-label="Cerrar sesión">
+            Salir
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Stats bar -->
+    <section class="stats-bar" aria-label="Estadísticas">
+      <div class="stats-inner">
+        <div class="stat-item" title="Números vendidos">
+          <span class="stat-number sold" id="statVendidos">0</span>
+          <span class="stat-label">Vendidos</span>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item" title="Números disponibles">
+          <span class="stat-number available" id="statDisponibles">500</span>
+          <span class="stat-label">Disponibles</span>
+        </div>
+        <div class="stat-divider" aria-hidden="true"></div>
+        <div class="stat-item" title="Total">
+          <span class="stat-number total">500</span>
+          <span class="stat-label">Total</span>
+        </div>
+        <div class="progress-bar-wrapper" aria-label="Progreso de ventas">
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-label" id="progressLabel">0% vendido</div>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-dot available" aria-hidden="true"></div>
+            Disponible
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot sold" aria-hidden="true"></div>
+            Vendido
+          </div>
+        </div>
+
+        <div class="connection-status" id="connectionStatus">
+          <div class="status-dot" id="statusDot"></div>
+          <span class="status-text" id="statusText">Conectando...</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Filters -->
+    <nav class="filters-bar" aria-label="Filtros">
+      <input
+        type="number"
+        class="search-input"
+        id="searchInput"
+        placeholder="Buscar #..."
+        min="1"
+        max="500"
+        aria-label="Buscar número"
+      />
+      <button class="filter-btn active-all" id="filterAll" data-filter="all">Todos</button>
+      <button class="filter-btn" id="filterAvailable" data-filter="available">Disponibles</button>
+      <button class="filter-btn" id="filterSold" data-filter="sold">Vendidos</button>
+    </nav>
+
+    <!-- Grid de números -->
+    <main class="grid-wrapper" role="main">
+      <div class="numeros-grid" id="numerosGrid" aria-label="Grilla de números de rifa">
+        <!-- Números se generan con JS -->
+      </div>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-state-icon">🔍</div>
+        <div class="empty-state-text">No se encontraron números con ese filtro</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: Marcar número -->
+  <div class="modal-overlay" id="marcarModal" role="dialog" aria-modal="true" aria-labelledby="marcarModalTitle">
+    <div class="modal">
+      <div class="modal-icon">🎟️</div>
+      <h2 class="modal-title" id="marcarModalTitle">
+        Marcar número <span class="modal-numero-badge" id="modalNumero">-</span>
+      </h2>
+      <p class="modal-subtitle">Ingresá el nombre del comprador para confirmar la venta</p>
+
+      <div class="modal-form-group">
+        <label for="compradorInput">Nombre del comprador</label>
+        <input
+          type="text"
+          id="compradorInput"
+          placeholder="Ej: María López"
+          autocapitalize="words"
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="modal-buttons">
+        <button class="btn-cancel" id="marcarCancelBtn">Cancelar</button>
+        <button class="btn-confirm" id="marcarConfirmBtn">✓ Confirmar venta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Ver número vendido -->
+  <div class="modal-overlay" id="infoModal" role="dialog" aria-modal="true" aria-labelledby="infoModalTitle">
+    <div class="modal">
+      <div class="modal-icon">✅</div>
+      <h2 class="modal-title" id="infoModalTitle">
+        Número <span class="modal-numero-badge" id="infoModalNumero">-</span>
+      </h2>
+      <p class="modal-subtitle" id="infoModalSubtitle">Información de la venta</p>
+
+      <div class="modal-info-grid" id="infoGrid">
+        <div class="modal-info-row">
+          <span>Comprador</span>
+          <span id="infoComprador">—</span>
+        </div>
+        <div class="modal-info-row">
+          <span>Vendedor</span>
+          <span id="infoVendedor">—</span>
+        </div>
+        <div class="modal-info-row">
+          <span>Fecha</span>
+          <span id="infoFecha">—</span>
+        </div>
+      </div>
+
+      <div class="modal-buttons" id="infoModalButtons">
+        <button class="btn-cancel btn-cancel-info" id="infoCancelBtn">Cerrar</button>
+        <button class="btn-unmark" id="infoUnmarkBtn" hidden>🔓 Desmarcar número</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/rifa.js"></script>
+</body>
+</html>
