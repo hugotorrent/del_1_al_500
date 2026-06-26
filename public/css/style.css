@@ -567,6 +567,26 @@ body {
   min-width: 120px;
 }
 
+#toggleMultiSelectBtn,
+.multi-toggle-btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+#toggleMultiSelectBtn:hover,
+.multi-toggle-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent-light);
+}
+
 #toggleMultiSelectBtn.active-multi {
   background: rgba(99, 102, 241, 0.18);
   border-color: rgba(99, 102, 241, 0.8);

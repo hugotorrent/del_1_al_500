@@ -48,7 +48,7 @@
   const statusText = document.getElementById('statusText');
 
   const searchInput = document.getElementById('searchInput');
-  const filterBtns = document.querySelectorAll('.filter-btn');
+  const filterBtns = document.querySelectorAll('button.filter-btn[data-filter]');
 
   // Modales
   const marcarModal = document.getElementById('marcarModal');
@@ -236,7 +236,7 @@
     } else if (multiSelectMode) {
       toggleNumeroSelection(num);
     } else {
-      openMarcarModalSingle(num);
+      openSingleMarkModal(num);
     }
   }
 
@@ -273,8 +273,11 @@
   function setMultiSelectMode(enabled) {
     multiSelectMode = enabled;
     toggleMultiSelectBtn.classList.toggle('active-multi', enabled);
-    toggleMultiSelectBtn.textContent = enabled ? 'Modo selección múltiple' : 'Seleccionar varios';
-    if (!enabled) clearSelection();
+    toggleMultiSelectBtn.textContent = enabled ? 'Modo selección múltiple activo' : 'Seleccionar varios';
+    if (!enabled) {
+      clearSelection();
+      selectedNumero = null;
+    }
   }
 
   function openMarcarModal() {
@@ -290,9 +293,22 @@
     setTimeout(() => compradorInput.focus(), 300);
   }
 
+  function openSingleMarkModal(num) {
+    selectedNumero = num;
+    selectedNumeros.clear();
+    updateSelectionBar();
+    modalNumero.textContent = num;
+    compradorInput.value = '';
+    marcarModal.classList.add('show');
+    setTimeout(() => compradorInput.focus(), 300);
+  }
+
   function closeMarcarModal() {
     marcarModal.classList.remove('show');
     selectedNumero = null;
+    if (!multiSelectMode) {
+      clearSelection();
+    }
   }
 
   marcarCancelBtn.addEventListener('click', closeMarcarModal);
@@ -309,7 +325,12 @@
       return;
     }
 
-    const numerosSeleccionados = [...selectedNumeros];
+    const numerosSeleccionados = selectedNumeros.size > 0 ? [...selectedNumeros] : selectedNumero ? [selectedNumero] : [];
+    if (numerosSeleccionados.length === 0) {
+      showToast('No hay números seleccionados para marcar', 'error');
+      return;
+    }
+
     socket.emit('marcar_numero', { numeros: numerosSeleccionados, comprador });
     closeMarcarModal();
     clearSelection();
