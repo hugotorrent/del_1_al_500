@@ -19,6 +19,7 @@
   let currentFilter = 'all';
   let searchValue = '';
   let selectedNumero = null;
+  const selectedNumeros = new Set();
   let toastTimer = null;
 
   // ——— Referencias DOM ———
@@ -30,6 +31,11 @@
   const adminBadge = document.getElementById('adminBadge');
   const roleBadgeText = document.getElementById('roleBadgeText');
   const logoutBtn = document.getElementById('logoutBtn');
+
+  const selectionBar = document.getElementById('selectionBar');
+  const selectionCount = document.getElementById('selectionCount');
+  const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+  const markSelectedBtn = document.getElementById('markSelectedBtn');
 
   const statVendidos = document.getElementById('statVendidos');
   const statDisponibles = document.getElementById('statDisponibles');
@@ -121,6 +127,7 @@
     const cell = document.createElement('button');
     cell.id = `num-${num}`;
     cell.className = 'numero-cell' + (data.vendido ? ' vendido' : '') + (role === 'admin' ? ' admin-mode' : '');
+    if (selectedNumeros.has(num)) cell.classList.add('selected');
     cell.textContent = num;
     cell.setAttribute('aria-label', `Número ${num} — ${data.vendido ? 'vendido a ' + data.comprador : 'disponible'}`);
     cell.setAttribute('data-num', num);
@@ -135,8 +142,14 @@
     if (!cell) return;
 
     cell.classList.toggle('vendido', data.vendido);
+    cell.classList.toggle('selected', selectedNumeros.has(data.numero));
     cell.setAttribute('data-vendido', data.vendido ? '1' : '0');
     cell.setAttribute('aria-label', `Número ${data.numero} — ${data.vendido ? 'vendido a ' + data.comprador : 'disponible'}`);
+
+    if (data.vendido && selectedNumeros.has(data.numero)) {
+      selectedNumeros.delete(data.numero);
+      updateSelectionBar();
+    }
 
     // Animación
     cell.classList.remove('just-updated');
@@ -219,14 +232,48 @@
     if (data.vendido) {
       openInfoModal(data);
     } else {
-      openMarcarModal(num);
+      toggleNumeroSelection(num);
     }
   }
 
-  // ——— Modal: marcar número ———
-  function openMarcarModal(num) {
-    selectedNumero = num;
-    modalNumero.textContent = num;
+  function toggleNumeroSelection(num) {
+    if (selectedNumeros.has(num)) {
+      selectedNumeros.delete(num);
+    } else {
+      selectedNumeros.add(num);
+    }
+    updateSelectionBar();
+    const cell = document.getElementById(`num-${num}`);
+    if (cell) cell.classList.toggle('selected', selectedNumeros.has(num));
+  }
+
+  function updateSelectionBar() {
+    const count = selectedNumeros.size;
+    if (count > 0) {
+      selectionBar.hidden = false;
+      selectionCount.textContent = count;
+      markSelectedBtn.textContent = count === 1 ? 'Marcar seleccionado' : 'Marcar seleccionados';
+    } else {
+      selectionBar.hidden = true;
+    }
+  }
+
+  function clearSelection() {
+    selectedNumeros.clear();
+    document.querySelectorAll('.numero-cell.selected').forEach((cell) => {
+      cell.classList.remove('selected');
+    });
+    updateSelectionBar();
+  }
+
+  function openMarcarModal() {
+    if (selectedNumeros.size === 0) return;
+    selectedNumero = null;
+    if (selectedNumeros.size === 1) {
+      modalNumero.textContent = [...selectedNumeros][0];
+    } else {
+      modalNumero.textContent = `${selectedNumeros.size} números`;
+    }
     compradorInput.value = '';
     marcarModal.classList.add('show');
     setTimeout(() => compradorInput.focus(), 300);
@@ -251,9 +298,11 @@
       return;
     }
 
-    socket.emit('marcar_numero', { numero: selectedNumero, comprador });
+    const numerosSeleccionados = [...selectedNumeros];
+    socket.emit('marcar_numero', { numeros: numerosSeleccionados, comprador });
     closeMarcarModal();
-    showToast(`Número ${selectedNumero} marcado ✓`, 'success');
+    clearSelection();
+    showToast(`${numerosSeleccionados.length === 1 ? `Número ${numerosSeleccionados[0]}` : `${numerosSeleccionados.length} números`} marcado ✓`, 'success');
   });
 
   compradorInput.addEventListener('keydown', (e) => {
@@ -294,6 +343,9 @@
   infoModal.addEventListener('click', (e) => {
     if (e.target === infoModal) closeInfoModal();
   });
+
+  clearSelectionBtn.addEventListener('click', clearSelection);
+  markSelectedBtn.addEventListener('click', openMarcarModal);
 
   infoUnmarkBtn.addEventListener('click', () => {
     if (!selectedNumero) return;

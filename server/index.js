@@ -86,39 +86,53 @@ io.on('connection', async (socket) => {
 
   // Marcar número como vendido
   socket.on('marcar_numero', async (data) => {
-    const { numero, comprador } = data;
+    const numeros = Array.isArray(data.numeros) ? data.numeros : data.numero ? [data.numero] : [];
+    const comprador = data.comprador;
 
-    if (!numero || numero < 1 || numero > 500) {
-      return socket.emit('error_operacion', { mensaje: 'Número inválido' });
+    if (!Array.isArray(numeros) || numeros.length === 0) {
+      return socket.emit('error_operacion', { mensaje: 'Debe seleccionar al menos un número' });
     }
 
     if (!comprador || comprador.trim().length < 2) {
       return socket.emit('error_operacion', { mensaje: 'El nombre del comprador es requerido' });
     }
 
+    const numerosValidos = numeros
+      .map((n) => Number(n))
+      .filter((n) => Number.isInteger(n) && n >= 1 && n <= 500);
+
+    if (numerosValidos.length !== numeros.length) {
+      return socket.emit('error_operacion', { mensaje: 'Uno o más números son inválidos' });
+    }
+
+    const uniqueNumeros = [...new Set(numerosValidos)];
+    if (uniqueNumeros.length !== numerosValidos.length) {
+      return socket.emit('error_operacion', { mensaje: 'Hay números duplicados en la selección' });
+    }
+
     try {
-      const num = await Numero.findOne({ numero });
-
-      if (!num) {
-        return socket.emit('error_operacion', { mensaje: 'Número no encontrado' });
+      const docs = await Numero.find({ numero: { $in: uniqueNumeros } });
+      if (docs.length !== uniqueNumeros.length) {
+        return socket.emit('error_operacion', { mensaje: 'Uno o más números no se encontraron' });
       }
 
-      if (num.vendido) {
-        return socket.emit('error_operacion', { mensaje: `El número ${numero} ya fue vendido` });
+      const yaVendidos = docs.filter((d) => d.vendido);
+      if (yaVendidos.length > 0) {
+        return socket.emit('error_operacion', { mensaje: `El número ${yaVendidos[0].numero} ya fue vendido` });
       }
 
-      num.vendido = true;
-      num.vendedor = socket.user.nombre;
-      num.comprador = comprador.trim();
-      num.fechaVenta = new Date();
-      await num.save();
+      const now = new Date();
+      await Numero.updateMany(
+        { numero: { $in: uniqueNumeros }, vendido: false },
+        { vendido: true, vendedor: socket.user.nombre, comprador: comprador.trim(), fechaVenta: now }
+      );
 
-      // Broadcast a todos los clientes
-      io.emit('numero_actualizado', num);
-      console.log(`🎟️  Número ${numero} marcado por ${socket.user.nombre} → comprador: ${comprador.trim()}`);
+      const updated = await Numero.find({ numero: { $in: uniqueNumeros } }).sort({ numero: 1 });
+      updated.forEach((num) => io.emit('numero_actualizado', num));
+      console.log(`🎟️  Números ${uniqueNumeros.join(', ')} marcados por ${socket.user.nombre} → comprador: ${comprador.trim()}`);
     } catch (err) {
       console.error('Error al marcar número:', err);
-      socket.emit('error_operacion', { mensaje: 'Error al marcar el número' });
+      socket.emit('error_operacion', { mensaje: 'Error al marcar los números' });
     }
   });
 

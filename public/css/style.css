@@ -542,6 +542,36 @@ body {
   color: var(--sold);
 }
 
+.selection-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 auto 16px;
+  padding: 12px 16px;
+  max-width: 880px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.selection-bar span {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.selection-bar .btn-cancel,
+.selection-bar .btn-confirm {
+  min-width: 120px;
+}
+
+.numero-cell.selected {
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.7);
+  transform: scale(1.05);
+}
+
 /* =====================
    GRID DE NÚMEROS
    ===================== */
