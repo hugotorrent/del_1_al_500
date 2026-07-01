@@ -6,7 +6,6 @@ const numeroSchema = new mongoose.Schema({
     required: true,
     unique: true,
     min: 1,
-    max: 500,
   },
   vendido: {
     type: Boolean,

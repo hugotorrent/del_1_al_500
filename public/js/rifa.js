@@ -117,10 +117,13 @@
   // ——— Render de la grilla ———
   function renderGrid() {
     numerosGrid.innerHTML = '';
-    for (let i = 1; i <= 500; i++) {
-      const cell = createCell(i);
+    const numerosArray = [...numeros.values()].sort((a, b) => a.numero - b.numero);
+
+    numerosArray.forEach((item) => {
+      const cell = createCell(item.numero);
       numerosGrid.appendChild(cell);
-    }
+    });
+
     applyFilters();
   }
 
@@ -217,11 +220,14 @@
   function updateStats() {
     let vendidos = 0;
     numeros.forEach((n) => { if (n.vendido) vendidos++; });
-    const disponibles = 500 - vendidos;
-    const pct = Math.round((vendidos / 500) * 100);
+
+    const total = numeros.size || 0;
+    const disponibles = total - vendidos;
+    const pct = total > 0 ? Math.round((vendidos / total) * 100) : 0;
 
     statVendidos.textContent = vendidos;
     statDisponibles.textContent = disponibles;
+    document.querySelector('.stat-number.total').textContent = total;
     progressFill.style.width = pct + '%';
     progressLabel.textContent = `${pct}% vendido`;
   }

@@ -28,21 +28,40 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Routes
 app.use('/api', authRoutes);
 
-// Inicializar los 500 números en la DB (solo si no existen)
+const getRifaRange = () => {
+  const start = Number.parseInt(process.env.RIFA_START || '1', 10);
+  const end = Number.parseInt(process.env.RIFA_END || '500', 10);
+
+  if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start) {
+    return { start: 1, end: 500 };
+  }
+
+  return { start, end };
+};
+
+const { start: RIFA_START, end: RIFA_END } = getRifaRange();
+
+// Inicializar los números configurados en la DB (insertando solo los faltantes)
 const inicializarNumeros = async () => {
   try {
-    const count = await Numero.countDocuments();
-    if (count === 0) {
-      console.log('⚙️  Inicializando 500 números en la base de datos...');
-      const numeros = [];
-      for (let i = 1; i <= 500; i++) {
-        numeros.push({ numero: i, vendido: false });
-      }
-      await Numero.insertMany(numeros);
-      console.log('✅ 500 números creados correctamente');
-    } else {
-      console.log(`📊 DB ya tiene ${count} números`);
+    const numerosEsperados = [];
+    for (let i = RIFA_START; i <= RIFA_END; i++) {
+      numerosEsperados.push(i);
     }
+
+    const existentes = await Numero.find({ numero: { $gte: RIFA_START, $lte: RIFA_END } }, 'numero');
+    const existentesSet = new Set(existentes.map((n) => n.numero));
+    const faltantes = numerosEsperados.filter((numero) => !existentesSet.has(numero));
+
+    if (faltantes.length > 0) {
+      console.log(`⚙️  Inicializando ${faltantes.length} números en la base de datos (${RIFA_START} a ${RIFA_END})...`);
+      const numeros = faltantes.map((numero) => ({ numero, vendido: false }));
+      await Numero.insertMany(numeros);
+      console.log(`✅ ${faltantes.length} números creados correctamente`);
+    }
+
+    const total = await Numero.countDocuments({ numero: { $gte: RIFA_START, $lte: RIFA_END } });
+    console.log(`📊 DB tiene ${total} números para la rifa ${RIFA_START}-${RIFA_END}`);
   } catch (error) {
     console.error('❌ Error al inicializar números:', error);
   }
@@ -51,7 +70,7 @@ const inicializarNumeros = async () => {
 // API REST — obtener todos los números
 app.get('/api/numeros', verifyToken, async (req, res) => {
   try {
-    const numeros = await Numero.find().sort({ numero: 1 });
+    const numeros = await Numero.find({ numero: { $gte: RIFA_START, $lte: RIFA_END } }).sort({ numero: 1 });
     res.json(numeros);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener números' });
@@ -78,7 +97,7 @@ io.on('connection', async (socket) => {
 
   // Enviar estado actual al cliente recién conectado
   try {
-    const numeros = await Numero.find().sort({ numero: 1 });
+    const numeros = await Numero.find({ numero: { $gte: RIFA_START, $lte: RIFA_END } }).sort({ numero: 1 });
     socket.emit('estado_inicial', numeros);
   } catch (err) {
     console.error('Error al enviar estado inicial:', err);
@@ -99,7 +118,7 @@ io.on('connection', async (socket) => {
 
     const numerosValidos = numeros
       .map((n) => Number(n))
-      .filter((n) => Number.isInteger(n) && n >= 1 && n <= 500);
+      .filter((n) => Number.isInteger(n) && n >= RIFA_START && n <= RIFA_END);
 
     if (numerosValidos.length !== numeros.length) {
       return socket.emit('error_operacion', { mensaje: 'Uno o más números son inválidos' });
@@ -144,7 +163,7 @@ io.on('connection', async (socket) => {
 
     const { numero } = data;
 
-    if (!numero || numero < 1 || numero > 500) {
+    if (!numero || numero < RIFA_START || numero > RIFA_END) {
       return socket.emit('error_operacion', { mensaje: 'Número inválido' });
     }
 
